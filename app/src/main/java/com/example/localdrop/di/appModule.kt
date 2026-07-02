@@ -34,5 +34,5 @@ val appModule = module{
     factory { StopBroadcastingUseCase(get()) }
     factory { ObserveMessagesUseCase(get()) }
 
-    viewModel{ MainViewModel(get(),get(),get(),get(), get()) }
+    viewModel{ MainViewModel(get(),get(),get(),get(), get(), get()) }
 }

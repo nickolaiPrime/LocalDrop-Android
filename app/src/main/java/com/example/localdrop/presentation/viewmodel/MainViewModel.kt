@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.localdrop.domain.model.NetworkDevice
 import com.example.localdrop.domain.model.TransferMessage
+import com.example.localdrop.domain.usecase.ObserveMessagesUseCase
 import com.example.localdrop.domain.usecase.SendMessageUseCase
 import com.example.localdrop.domain.usecase.StartBroadcastingUseCase
 import com.example.localdrop.domain.usecase.StartDiscoveryUseCase
@@ -20,7 +21,8 @@ class MainViewModel(
     private val startBroadcastingUseCase: StartBroadcastingUseCase,
     private val stopBroadcastingUseCase: StopBroadcastingUseCase,
     private val startServerUseCase: StartServerUseCase,
-    private val startDiscoveryUseCase: StartDiscoveryUseCase
+    private val startDiscoveryUseCase: StartDiscoveryUseCase,
+    private val observeMessagesUseCase: ObserveMessagesUseCase
 ) : ViewModel(){
     private val _uiState = MutableStateFlow(DiscoveryUiState())
     val uiState : StateFlow<DiscoveryUiState> = _uiState.asStateFlow()
@@ -32,7 +34,10 @@ class MainViewModel(
         _uiState.value = _uiState.value.copy(myDeviceName = fullNetworkName)
         viewModelScope.launch {
             val port = startServerUseCase()
-            startBroadcastingUseCase()
+            startBroadcastingUseCase(id = fullNetworkName, port = port)
+            observeMessagesUseCase().collect{ message ->
+                _uiState.value = _uiState.value.copy(messages = _uiState.value.messages + message)
+            }
         }
     }
 
