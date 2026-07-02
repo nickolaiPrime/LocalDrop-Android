@@ -6,7 +6,9 @@ import kotlinx.coroutines.flow.Flow
 
 interface P2pConnectionRepository {
 
-    fun startServer() : Flow<TransferMessage>
+    suspend fun startServer() : Int
+
+    fun observeMessages() : Flow<TransferMessage>
 
     suspend fun stopServer()
 

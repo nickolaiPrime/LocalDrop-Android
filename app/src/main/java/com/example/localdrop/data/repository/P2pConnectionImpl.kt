@@ -7,6 +7,9 @@ import com.example.localdrop.domain.repository.P2pConnectionRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.isActive
@@ -20,33 +23,44 @@ class P2pConnectionImpl : P2pConnectionRepository {
 
     private var serverSocket : ServerSocket? = null
     private var clientSocket : Socket? = null
+    private val messageFlow = MutableSharedFlow<TransferMessage>()
 
-    override fun startServer(): Flow<TransferMessage> {
-        return callbackFlow {
-            this@P2pConnectionImpl.serverSocket = ServerSocket(7777)
-            while(isActive){
-                try {
-                    val socket = serverSocket?.accept()?: break
+    override suspend fun startServer(): Int {
+        val socket = ServerSocket(0)
+        serverSocket = socket
+        Thread {
+            while (!socket.isClosed){
+                val clientSocket = socket.accept()
+                Thread {
+                    clientSocket.soTimeout = 5000
+                    try {
+                        val inputStream = DataInputStream(clientSocket.getInputStream())
+                        val messageBytes = ByteArray(inputStream.readInt())
+                        inputStream.readFully(messageBytes)
+                        val text = String(messageBytes, Charsets.UTF_8)
 
-                    val inputStream = DataInputStream(socket.getInputStream())
-                    val messageBytes = ByteArray(inputStream.readInt())
-                    inputStream.readFully(messageBytes)
-                    val text = String(messageBytes, Charsets.UTF_8)
-
-                    val message = TransferMessage(text = text, isFromMe = false, timestamp = System.currentTimeMillis())
-                    trySend(message)
-                    socket.close()
-                }
-                catch(e: Exception){
-                    Log.d("P2P_SERVER", "Сервер остановлен или произошла ошибка:${e.message}")
-                    break
-                }
+                        val message = TransferMessage(text = text, isFromMe = false, timestamp = System.currentTimeMillis())
+                        messageFlow.tryEmit(message)
+                    }
+                    catch(e: Exception){
+                        Log.d("P2P_SERVER", "Сервер остановлен или произошла ошибка:${e.message}")
+                    }
+                    finally {
+                        try {
+                            clientSocket.close()
+                        }
+                        catch(e: Exception){
+                            Log.d("P2P_SERVER", "Сервер остановлен или произошла ошибка:${e.message}")
+                        }
+                    }
+                }.start()
             }
-            awaitClose {
-                serverSocket?.close()
-                serverSocket = null
-            }
-        }.flowOn(Dispatchers.IO)
+        }.start()
+        return socket.localPort
+    }
+
+    override fun observeMessages(): Flow<TransferMessage> {
+        return messageFlow.asSharedFlow()
     }
 
     override suspend fun stopServer() {
