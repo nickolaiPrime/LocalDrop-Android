@@ -57,4 +57,12 @@ class MainViewModel(
             _uiState.value = _uiState.value.copy(messages = _uiState.value.messages + message)
         }
     }
+
+    fun selectDevice(device : NetworkDevice){
+        _uiState.value = _uiState.value.copy(selectedDevice = device)
+    }
+
+    fun goBackToDeviceList(){
+        _uiState.value = _uiState.value.copy(selectedDevice = null)
+    }
 }

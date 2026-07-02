@@ -8,5 +8,6 @@ data class DiscoveryUiState(
     val isBroadcasting : Boolean = false,
     val isScanning : Boolean = true,
     val discoveredDevices : List<NetworkDevice> = emptyList(),
-    val messages : List<TransferMessage> = emptyList()
+    val messages : List<TransferMessage> = emptyList(),
+    val selectedDevice : NetworkDevice? = null
 )
