@@ -31,11 +31,11 @@ class NsdDiscoveryImpl(private val context : Context) : NetworkDiscoveryReposito
     private val nsdManager = context.getSystemService(Context.NSD_SERVICE) as NsdManager
 
 
-    override suspend fun startBroadcasting(id: String) {
+    override suspend fun startBroadcasting(id: String, port : Int) {
         val serviceInfo = NsdServiceInfo().apply {
             serviceName = id
             serviceType = "_localDrop._tcp."
-            port = 7777
+            this.port = port
         }
         nsdManager.registerService(serviceInfo, NsdManager.PROTOCOL_DNS_SD, registrationListener)
     }

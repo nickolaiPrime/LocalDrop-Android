@@ -31,11 +31,8 @@ class MainViewModel(
         val fullNetworkName = "$name:$myId"
         _uiState.value = _uiState.value.copy(myDeviceName = fullNetworkName)
         viewModelScope.launch {
-            startBroadcastingUseCase(fullNetworkName)
-            _uiState.value = _uiState.value.copy(isBroadcasting = true)
-            startServerUseCase().collect { message ->
-                _uiState.value = _uiState.value.copy(messages = _uiState.value.messages + message)
-            }
+            val port = startServerUseCase()
+            startBroadcastingUseCase()
         }
     }
 

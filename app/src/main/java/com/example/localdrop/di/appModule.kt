@@ -6,6 +6,7 @@ import com.example.localdrop.data.repository.NsdDiscoveryImpl
 import com.example.localdrop.data.repository.P2pConnectionImpl
 import com.example.localdrop.domain.repository.NetworkDiscoveryRepository
 import com.example.localdrop.domain.repository.P2pConnectionRepository
+import com.example.localdrop.domain.usecase.ObserveMessagesUseCase
 import com.example.localdrop.domain.usecase.SendMessageUseCase
 import com.example.localdrop.domain.usecase.StartBroadcastingUseCase
 import com.example.localdrop.domain.usecase.StartDiscoveryUseCase
@@ -31,6 +32,7 @@ val appModule = module{
     factory { StartDiscoveryUseCase(get()) }
     factory { StartServerUseCase(get()) }
     factory { StopBroadcastingUseCase(get()) }
+    factory { ObserveMessagesUseCase(get()) }
 
     viewModel{ MainViewModel(get(),get(),get(),get(), get()) }
 }
