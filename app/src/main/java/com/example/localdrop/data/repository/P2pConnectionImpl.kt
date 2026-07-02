@@ -72,17 +72,27 @@ class P2pConnectionImpl : P2pConnectionRepository {
         text: String
     ) {
         withContext(Dispatchers.IO){
+            var socket: Socket? = null
             try {
-                val socket = Socket(targetDevice.ipAddress, targetDevice.port)
+                socket = Socket(targetDevice.ipAddress, targetDevice.port)
                 val bytes = text.toByteArray(Charsets.UTF_8)
                 val outputStream = DataOutputStream(socket.getOutputStream())
                 outputStream.writeInt(bytes.size)
                 outputStream.write(bytes)
                 outputStream.flush()
-                socket.close()
+                val message = TransferMessage(text = text, isFromMe = true, timestamp = System.currentTimeMillis())
+                messageFlow.tryEmit(message)
             }
             catch (e: Exception){
-                throw e
+                Log.d("P2P_SERVER", "Ошибка отправки сообщения: ${e.message}")
+            }
+            finally {
+                try{
+                    socket?.close()
+                }
+                catch (e: Exception){
+                    Log.d("P2P_SERVER", "Ошибка закрытия сокета: ${e.message}")
+                }
             }
         }
     }
