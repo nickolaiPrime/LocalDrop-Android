@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
@@ -50,35 +52,45 @@ class MainActivity : ComponentActivity() {
                     val viewModel : MainViewModel = koinViewModel()
                     val uiState by viewModel.uiState.collectAsState()
 
-                    if(uiState.myDeviceName.isEmpty()){
-                        LoginScreen(){
-                            viewModel.initDevice(it)
-                            viewModel.startScanning()
-                        }
-                    }
-                    else{
-                        if(uiState.selectedDevice == null){
-                            MainDropScreen(
-                                uiState = uiState,
-                                onDeviceSelected = { device->
-                                    Log.d("MainActivity", "Выбрано устройство: ${device.ipAddress}")
-                                    viewModel.selectDevice(device)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .safeDrawingPadding()
+                    ) {
+                        if (uiState.myDeviceName.isEmpty()) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                LoginScreen { name ->
+                                    viewModel.initDevice(name)
+                                    viewModel.startScanning()
                                 }
-                            )
-                        }
-                        else{
-                            ChatScreen(
-                                uiState = uiState,
-                                onBackClick = { viewModel.goBackToDeviceList() },
-                                onSendClick = { text ->
-                                    val target = uiState.selectedDevice
-                                    if(target != null){
-                                        viewModel.sendText(target,text)
+                            }
+                        } else {
+                            if (uiState.selectedDevice == null) {
+                                MainDropScreen(
+                                    uiState = uiState,
+                                    onDeviceSelected = { device ->
+                                        Log.d("MainActivity", "Выбрано устройство: ${device.ipAddress}")
+                                        viewModel.selectDevice(device)
                                     }
-                                }
-                            )
+                                )
+                            } else {
+                                ChatScreen(
+                                    uiState = uiState,
+                                    onBackClick = { viewModel.goBackToDeviceList() },
+                                    onSendClick = { text ->
+                                        val target = uiState.selectedDevice
+                                        if (target != null) {
+                                            viewModel.sendText(target, text)
+                                        }
+                                    }
+                                )
+                            }
                         }
                     }
+
                 }
             }
         }
