@@ -2,10 +2,12 @@ package com.example.localdrop.presentation.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -13,10 +15,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -45,7 +49,7 @@ fun ChatScreen(
     onSendClick: (String) -> Unit
 ){
     val listState = rememberLazyListState()
-    val scrollButtonState = remember { derivedStateOf {listState.firstVisibleItemIndex < 3} }
+    val scrollButtonState = remember { derivedStateOf {listState.firstVisibleItemIndex <= 3} }
     val coroutineScope = rememberCoroutineScope()
     var hasUnreadMessages by remember {mutableStateOf(false)}
 
@@ -86,7 +90,8 @@ fun ChatScreen(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth(),
-                state = listState
+                state = listState,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(uiState.messages) { message ->
                     val alignment =
@@ -103,7 +108,7 @@ fun ChatScreen(
                         ) {
                             Text(
                                 text = message.text,
-                                modifier = Modifier.padding(vertical = 4.dp)
+                                modifier = Modifier.padding(vertical = 8.dp, horizontal = 12.dp)
                             )
                         }
                     }
@@ -121,9 +126,35 @@ fun ChatScreen(
                                 hasUnreadMessages = false
                                 if (uiState.messages.isNotEmpty()) listState.animateScrollToItem(uiState.messages.size - 1)
                             }
-                        }
+                        },
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp),
+                        shape = CircleShape,
+                        modifier = Modifier.defaultMinSize(minWidth = 56.dp, minHeight = 56.dp)
                     ) {
-                        Text(text = if (hasUnreadMessages) "↓ •" else "↓")
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 8.dp)
+                        ){
+                            Text(
+                                text = "↓",
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold,
+                                    background =Color.Transparent
+                                )
+                            )
+                            if (hasUnreadMessages) {
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "•",
+                                    style = MaterialTheme.typography.titleLarge.copy(
+                                        fontWeight = androidx.compose.ui.text.font.FontWeight.ExtraBold,
+                                        background = Color.Transparent
+                                    )
+                                )
+                            }
+                        }
                     }
                 }
             }
