@@ -81,7 +81,7 @@ class P2pConnectionImpl : P2pConnectionRepository {
                 outputStream.write(bytes)
                 outputStream.flush()
                 val message = TransferMessage(text = text, isFromMe = true, timestamp = System.currentTimeMillis())
-                messageFlow.tryEmit(message)
+                messageFlow.emit(message)
             }
             catch (e: Exception){
                 Log.d("P2P_SERVER", "Ошибка отправки сообщения: ${e.message}")

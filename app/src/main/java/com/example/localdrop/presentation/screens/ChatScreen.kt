@@ -31,7 +31,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.localdrop.domain.model.NetworkDevice
+import com.example.localdrop.domain.model.TransferMessage
 import com.example.localdrop.presentation.viewmodel.DiscoveryUiState
 import kotlinx.coroutines.launch
 
@@ -42,7 +45,7 @@ fun ChatScreen(
     onSendClick: (String) -> Unit
 ){
     val listState = rememberLazyListState()
-    val scrollButtonState = remember { derivedStateOf {listState.firstVisibleItemIndex > 0} }
+    val scrollButtonState = remember { derivedStateOf {listState.firstVisibleItemIndex < 3} }
     val coroutineScope = rememberCoroutineScope()
     var hasUnreadMessages by remember {mutableStateOf(false)}
 
@@ -155,5 +158,47 @@ fun ChatScreen(
                 Text(text = "Отправить")
             }
         }
+    }
+}
+
+@Preview(showBackground = true, name = "Интерактивный тест прокрутки")
+@Composable
+fun ChatScrollPreview() {
+    // 1. Генерируем много сообщений, чтобы забить экран и проверить скролл
+    val mockMessages = remember {
+        mutableListOf<TransferMessage>().apply {
+            add(TransferMessage("Привет! Тут много сообщений, чтобы проверить, как работает скролл.", false, 1L))
+            add(TransferMessage("О, отлично, давай проверим!", true, 2L))
+
+            // Генерируем 15 фейковых сообщений для заполнения экрана
+            for (i in 1..15) {
+                add(
+                    TransferMessage(
+                        text = if (i % 2 == 0) "Сообщение от меня №$i" else "Входящее сообщение №$i с очень длинным-длинным текстом для проверки переноса строк в карточке",
+                        isFromMe = i % 2 == 0,
+                        timestamp = System.currentTimeMillis() + i
+                    )
+                )
+            }
+            add(TransferMessage("Это последнее сообщение. Сейчас список должен быть в самом низу.", false, 99L))
+        }
+    }
+
+    // Собираем стейт
+    val mockUiState = DiscoveryUiState(
+        myDeviceName = "Тестер",
+        selectedDevice = NetworkDevice(name = "Устройство-Собеседник", ipAddress = "127.0.0.1", port = 8080),
+        messages = mockMessages
+    )
+
+    MaterialTheme {
+        ChatScreen(
+            uiState = mockUiState,
+            onBackClick = {},
+            onSendClick = { text ->
+                // В интерактивном режиме это позволит добавлять сообщения по нажатию "Отправить"!
+                mockMessages.add(TransferMessage(text, isFromMe = true, timestamp = System.currentTimeMillis()))
+            }
+        )
     }
 }
