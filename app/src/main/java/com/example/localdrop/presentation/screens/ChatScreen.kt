@@ -64,36 +64,20 @@ fun ChatScreen(
                 .weight(1f)
         ){
             items(uiState.messages){ message ->
-                if(message.isFromMe){
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        contentAlignment = Alignment.CenterEnd
+                val alignment = if (message.isFromMe) Alignment.CenterEnd else Alignment.CenterStart
+                val color = if (message.isFromMe) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    contentAlignment = alignment
+                ){
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = color)
                     ){
-                        Card(
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-                        ){
-                            Text(
-                                text = message.text,
-                                modifier = Modifier.padding(vertical = 4.dp)
-                            )
-                        }
-                    }
-                }
-                else{
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        contentAlignment = Alignment.CenterStart
-                    ){
-                        Card(
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-                        ){
-                            Text(
-                                text = message.text,
-                                modifier = Modifier.padding(vertical = 4.dp)
-                            )
-                        }
+                        Text(
+                            text = message.text,
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        )
                     }
                 }
             }
