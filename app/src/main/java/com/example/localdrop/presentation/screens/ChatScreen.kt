@@ -21,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,6 +44,14 @@ fun ChatScreen(
     val listState = rememberLazyListState()
     val scrollButtonState = remember { derivedStateOf {listState.firstVisibleItemIndex > 0} }
     val coroutineScope = rememberCoroutineScope()
+    var hasUnreadMessages by remember {mutableStateOf(false)}
+
+    LaunchedEffect(uiState.messages.size) {
+        if(scrollButtonState.value){
+            hasUnreadMessages = true
+        }
+    }
+
     BackHandler(
         enabled = true,
         onBack = onBackClick
@@ -106,13 +115,12 @@ fun ChatScreen(
                     FloatingActionButton(
                         onClick = {
                             coroutineScope.launch {
-                                if (uiState.messages.isNotEmpty()) listState.animateScrollToItem(
-                                    uiState.messages.size - 1
-                                )
+                                hasUnreadMessages = false
+                                if (uiState.messages.isNotEmpty()) listState.animateScrollToItem(uiState.messages.size - 1)
                             }
                         }
                     ) {
-                        Text(text = "↓")
+                        Text(text = if (hasUnreadMessages) "↓ •" else "↓")
                     }
                 }
             }
