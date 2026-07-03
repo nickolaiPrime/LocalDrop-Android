@@ -1,5 +1,6 @@
 package com.example.localdrop.presentation.viewmodel
 
+import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -52,9 +53,12 @@ class MainViewModel(
 
     fun sendText(device : NetworkDevice, text : String){
         viewModelScope.launch {
-            sendMessageUseCase(device, text)
-            val message = TransferMessage(text = text, isFromMe = true, timestamp = System.currentTimeMillis())
-            _uiState.value = _uiState.value.copy(messages = _uiState.value.messages + message)
+            try{
+                sendMessageUseCase(device, text)
+            }
+            catch(e: Exception){
+                Log.d("P2P_VIEWMODEL", "Ошибка отправки сообщения: ${e.message}")
+            }
         }
     }
 

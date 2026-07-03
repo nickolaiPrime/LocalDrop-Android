@@ -34,6 +34,9 @@ import org.koin.androidx.compose.koinViewModel
 import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.Alignment
 import com.example.localdrop.domain.model.NetworkDevice
+import com.example.localdrop.presentation.screens.ChatScreen
+import com.example.localdrop.presentation.screens.LoginScreen
+import com.example.localdrop.presentation.screens.MainDropScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,162 +71,16 @@ class MainActivity : ComponentActivity() {
                                 uiState = uiState,
                                 onBackClick = { viewModel.goBackToDeviceList() },
                                 onSendClick = { text ->
-                                    Log.d("MainActivity", "Хотим отправить: $text")
+                                    val target = uiState.selectedDevice
+                                    if(target != null){
+                                        viewModel.sendText(target,text)
+                                    }
                                 }
-                            ){}
+                            )
                         }
                     }
                 }
             }
         }
     }
-}
-
-@Composable
-fun LoginScreen(
-    onNameEntered : (String) -> Unit
-){
-    var inputName by remember { mutableStateOf("") }
-
-    Column(){
-        OutlinedTextField(
-            value = inputName,
-            onValueChange = {inputName = it}
-        )
-
-        Button(
-            onClick = { onNameEntered(inputName) }
-        ){
-            Text(text = "Войти в сеть")
-        }
-    }
-}
-
-@Composable
-fun MainDropScreen(
-    uiState : DiscoveryUiState,
-    onDeviceSelected : (NetworkDevice) -> Unit
-){
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ){
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-        ){
-            Column(
-                modifier = Modifier
-                    .padding(16.dp)
-            ){
-                Text(text = "Вы в сети как ${uiState.myDeviceName.substringBefore(":")}")
-                if(uiState.isScanning){
-                    Text(text = "Сканирование активно...")
-                }
-                else{
-                    Text(text = "Ожидание...")
-                }
-            }
-        }
-
-        Spacer(
-            modifier = Modifier
-                .height(16.dp)
-        )
-
-        Text(text = "Устройства поблизости:")
-
-        Spacer(
-            modifier = Modifier
-                .height(8.dp)
-        )
-
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
-            items(uiState.discoveredDevices) { device ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp)
-                        .clickable { onDeviceSelected(device) }
-                ){
-                    Text(text = "Устройство : ${device.ipAddress}:${device.port}", Modifier.padding(16.dp))
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun ChatScreen(
-    uiState : DiscoveryUiState,
-    onBackClick: () -> Unit,
-    onSendClick: (String) -> Unit
-){
-    var inputText by remember { mutableStateOf("") }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ){
-
-        Button(
-            onClick = onBackClick
-        ){
-            Text(text = "Назад")
-        }
-
-        Text(
-            text = "Чат с устройством: ${uiState.selectedDevice?.ipAddress}",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(vertical = 8.dp)
-        )
-
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-        ){
-            items(uiState.messages){ message ->
-                Text(
-                    text = message.text,
-                    modifier = Modifier.padding(vertical = 4.dp)
-                )
-            }
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ){
-            OutlinedTextField(
-                value = inputText,
-                onValueChange = {inputText = it},
-                modifier = Modifier.weight(1f),
-                placeholder = { Text(text = "Введите сообщение...") }
-            )
-
-            Spacer(
-                modifier = Modifier
-                    .width(8.dp)
-            )
-
-            Button(
-                onClick = {
-                    if(inputText.isNotBlank()){
-                        onSendClick(inputText)
-                        inputText = ""
-                    }
-                }
-            ){
-                Text(text = "Отправить")
-            }
-        }
-    }
-
 }
