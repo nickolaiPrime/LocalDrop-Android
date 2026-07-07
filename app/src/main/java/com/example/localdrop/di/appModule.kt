@@ -13,6 +13,9 @@ import com.example.localdrop.domain.usecase.StartDiscoveryUseCase
 import com.example.localdrop.domain.usecase.StartServerUseCase
 import com.example.localdrop.domain.usecase.StopBroadcastingUseCase
 import com.example.localdrop.presentation.viewmodel.MainViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
@@ -22,9 +25,12 @@ val appModule = module{
     single<NsdManager>{
         androidContext().getSystemService(Context.NSD_SERVICE) as NsdManager
     }
+    single<CoroutineScope>{
+        CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    }
 
     single<NetworkDiscoveryRepository>{ NsdDiscoveryImpl(get()) }
-    single<P2pConnectionRepository>{ P2pConnectionImpl() }
+    single<P2pConnectionRepository>{ P2pConnectionImpl(get()) }
 
     factory { StartBroadcastingUseCase(get()) }
     factory { SendMessageUseCase(get()) }
