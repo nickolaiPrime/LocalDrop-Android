@@ -1,7 +1,8 @@
 package com.example.localdrop.domain.model
 
-class TransferMessage(
+data class TransferMessage(
     val text : String,
     val isFromMe : Boolean,
-    val timestamp : Long
+    val timestamp : Long,
+    val dialogKey : String?
 )

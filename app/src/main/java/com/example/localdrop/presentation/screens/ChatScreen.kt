@@ -53,8 +53,22 @@ fun ChatScreen(
     val coroutineScope = rememberCoroutineScope()
     var hasUnreadMessages by remember {mutableStateOf(false)}
 
-    LaunchedEffect(uiState.messages.size) {
-        if(scrollButtonState.value){
+    val selectedDevice = uiState.selectedDevice
+    val messages = if(selectedDevice != null){
+        uiState.messages[selectedDevice.name] ?: emptyList()
+    }
+    else{
+        emptyList()
+    }
+
+    LaunchedEffect(selectedDevice?.name) {
+        if (messages.isNotEmpty()) {
+            listState.scrollToItem(messages.size - 1)
+        }
+    }
+
+    LaunchedEffect(messages.size) {
+        if(scrollButtonState.value && messages.isNotEmpty()){
             hasUnreadMessages = true
         }
     }
@@ -93,7 +107,7 @@ fun ChatScreen(
                 state = listState,
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(uiState.messages) { message ->
+                items(messages) { message ->
                     val alignment =
                         if (message.isFromMe) Alignment.CenterEnd else Alignment.CenterStart
                     val color =
@@ -124,7 +138,7 @@ fun ChatScreen(
                         onClick = {
                             coroutineScope.launch {
                                 hasUnreadMessages = false
-                                if (uiState.messages.isNotEmpty()) listState.animateScrollToItem(uiState.messages.size - 1)
+                                if (messages.isNotEmpty()) listState.animateScrollToItem(messages.size - 1)
                             }
                         },
                         containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
@@ -195,31 +209,35 @@ fun ChatScreen(
 @Preview(showBackground = true, name = "Интерактивный тест прокрутки")
 @Composable
 fun ChatScrollPreview() {
-    // 1. Генерируем много сообщений, чтобы забить экран и проверить скролл
+    // Генерируем много сообщений
     val mockMessages = remember {
         mutableListOf<TransferMessage>().apply {
-            add(TransferMessage("Привет! Тут много сообщений, чтобы проверить, как работает скролл.", false, 1L))
-            add(TransferMessage("О, отлично, давай проверим!", true, 2L))
+            add(TransferMessage("Привет! Тут много сообщений, чтобы проверить, как работает скролл.", false, 1L, dialogKey = "1"))
+            add(TransferMessage("О, отлично, давай проверим!", true, 2L, dialogKey = "1"))
 
-            // Генерируем 15 фейковых сообщений для заполнения экрана
             for (i in 1..15) {
                 add(
                     TransferMessage(
                         text = if (i % 2 == 0) "Сообщение от меня №$i" else "Входящее сообщение №$i с очень длинным-длинным текстом для проверки переноса строк в карточке",
                         isFromMe = i % 2 == 0,
-                        timestamp = System.currentTimeMillis() + i
+                        timestamp = System.currentTimeMillis() + i,
+                        dialogKey = "1"
                     )
                 )
             }
-            add(TransferMessage("Это последнее сообщение. Сейчас список должен быть в самом низу.", false, 99L))
+            add(TransferMessage("Это последнее сообщение. Сейчас список должен быть в самом низу.", false, 99L, dialogKey = "1"))
         }
     }
 
-    // Собираем стейт
+    // Стейт с картой сообщений
     val mockUiState = DiscoveryUiState(
         myDeviceName = "Тестер",
-        selectedDevice = NetworkDevice(name = "Устройство-Собеседник", ipAddress = "127.0.0.1", port = 8080),
-        messages = mockMessages
+        selectedDevice = NetworkDevice(
+            name = "Устройство-Собеседник",
+            ipAddress = "127.0.0.1",
+            port = 8080
+        ),
+        messages = mapOf("Устройство-Собеседник" to mockMessages) // ✅ ключ совпадает с именем
     )
 
     MaterialTheme {
@@ -227,8 +245,14 @@ fun ChatScrollPreview() {
             uiState = mockUiState,
             onBackClick = {},
             onSendClick = { text ->
-                // В интерактивном режиме это позволит добавлять сообщения по нажатию "Отправить"!
-                mockMessages.add(TransferMessage(text, isFromMe = true, timestamp = System.currentTimeMillis()))
+                mockMessages.add(
+                    TransferMessage(
+                        text = text,
+                        isFromMe = true,
+                        timestamp = System.currentTimeMillis(),
+                        dialogKey = "1"
+                    )
+                )
             }
         )
     }

@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.util.Collections.emptyMap
 
 class MainViewModel(
     private val sendMessageUseCase: SendMessageUseCase,
@@ -27,17 +28,34 @@ class MainViewModel(
 ) : ViewModel(){
     private val _uiState = MutableStateFlow(DiscoveryUiState())
     val uiState : StateFlow<DiscoveryUiState> = _uiState.asStateFlow()
+    private val ipToKey = mutableMapOf<String, String>()
 
     private val myId = java.util.UUID.randomUUID().toString()
 
-    fun initDevice(name : String){
+    fun initDevice(name : String) {
         val fullNetworkName = "$name:$myId"
         _uiState.value = _uiState.value.copy(myDeviceName = fullNetworkName)
         viewModelScope.launch {
             val port = startServerUseCase()
             startBroadcastingUseCase(id = fullNetworkName, port = port)
-            observeMessagesUseCase().collect{ message ->
-                _uiState.value = _uiState.value.copy(messages = _uiState.value.messages + message)
+
+            observeMessagesUseCase().collect { message ->
+                val rawKey = message.dialogKey ?: return@collect
+                val cleanRawKey = rawKey.removePrefix("/")
+
+                val finalKey = when {
+                    message.isFromMe -> cleanRawKey
+                    ipToKey.containsKey(cleanRawKey) -> ipToKey[cleanRawKey]!!
+                    else -> cleanRawKey
+                }
+
+                val currentList = _uiState.value.messages[finalKey] ?: emptyList()
+
+                _uiState.value = _uiState.value.copy(
+                    messages = _uiState.value.messages.toMutableMap().apply {
+                        put(finalKey, currentList + message.copy(dialogKey = finalKey))
+                    }
+                )
             }
         }
     }
@@ -47,6 +65,9 @@ class MainViewModel(
             _uiState.value = _uiState.value.copy(isScanning = true)
             startDiscoveryUseCase(_uiState.value.myDeviceName).collect { devicesList ->
                 _uiState.value = _uiState.value.copy(discoveredDevices = devicesList)
+                for(item in devicesList){
+                    ipToKey[item.ipAddress] = item.name
+                }
             }
         }
     }

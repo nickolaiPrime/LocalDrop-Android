@@ -48,7 +48,8 @@ class P2pConnectionImpl(private val externalScope: CoroutineScope) : P2pConnecti
                                 val message = TransferMessage(
                                     text = text,
                                     isFromMe = false,
-                                    timestamp = System.currentTimeMillis()
+                                    timestamp = System.currentTimeMillis(),
+                                    dialogKey = clientSocket.inetAddress.hostAddress.removePrefix("/")
                                 )
                                 messageFlow.emit(message)
                             }
@@ -95,7 +96,7 @@ class P2pConnectionImpl(private val externalScope: CoroutineScope) : P2pConnecti
                 outputStream.write(bytes)
                 outputStream.flush()
 
-                val message = TransferMessage(text = text, isFromMe = true, timestamp = System.currentTimeMillis())
+                val message = TransferMessage(text = text, isFromMe = true, timestamp = System.currentTimeMillis(), dialogKey = targetDevice.name)
                 messageFlow.emit(message)
             } catch (e: Exception) {
                 Log.e("P2P_SERVER", "Ошибка отправки сообщения на ${targetDevice.ipAddress}:${targetDevice.port}: ${e.message}")
